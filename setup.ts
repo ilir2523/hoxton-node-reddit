@@ -75,13 +75,16 @@ DROP TABLE IF EXISTS subreddits;
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER,
     name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    PRIMARY KEY (id)
+    email TEXT NOT NULL UNIQUE,
+    PRIMARY KEY (id),
+    CHECK(name <> ''),
+    CHECK(email <> '')
 );
 
 CREATE TABLE IF NOT EXISTS subreddits (
     id INTEGER,
-    title TEXT,
+    title TEXT NOT NULL UNIQUE,
+    CHECK(title <> ''),
     PRIMARY KEY (id)
 );
 
@@ -95,7 +98,8 @@ subredditId INTEGER,
 rating INTEGER,
 PRIMARY KEY (id),
 FOREIGN KEY (userId) REFERENCES users(id),
-FOREIGN KEY (subredditId) REFERENCES subreddits(id)
+FOREIGN KEY (subredditId) REFERENCES subreddits(id),
+CHECK(title <> '')
 );
 
 CREATE TABLE IF NOT EXISTS comments (
