@@ -67,10 +67,10 @@ const comments = [
 ]
 
 db.exec(`
-DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS subreddits;
+DROP TABLE IF EXISTS comments;
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER,

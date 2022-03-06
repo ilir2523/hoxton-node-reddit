@@ -33,8 +33,17 @@ const createUser = db.prepare(`INSERT INTO users (name, email) VALUES (?, ?);`)
 
 const updateUser = db.prepare(`UPDATE users SET name=?, email=? WHERE id=?`)
 
-// // const getAllPosts = db.prepare(``)
-// // const getPost = db.prepare(``)
+const getAllPosts = db.prepare(`
+SELECT posts.id, posts.title, posts.content, posts.image, posts.rating,
+users.name as 'user_name', subreddits.title as 'subreddit' from posts
+INNER JOIN users ON users.id = userId
+INNER JOIN subreddits on subreddits.id = subredditId`)
+const getPost = db.prepare(`
+SELECT posts.id, posts.title, posts.content, posts.image, posts.rating,
+users.name as 'user_name', subreddits.title as 'subreddit' from posts
+INNER JOIN users ON users.id = userId
+INNER JOIN subreddits on subreddits.id = subredditId WHERE posts.id=?`)
+const getAllCommentsForPost = db.prepare(`SELECT * from comments WHERE postId=?`)
 // const getAllSubreddits = db.prepare(`SELECT * from subreddits`)
 // const getSubreddit = db.prepare(`SELECT * from subreddits WHERE subreddit.id=?`)
 // const getAllComments = db.prepare(`SELECT * from comments`)
@@ -65,6 +74,11 @@ app.get('/users', (req, res) => {
     } else res.send(usersToSend)
 })
 
+app.get('/posts', (req, res) => {
+    const posts = getAllPosts.all()
+    res.send(posts)
+})
+
 app.get('/users/:id', (req, res) => {
     const id = req.params.id
     const user = getUser.get(id)
@@ -73,6 +87,16 @@ app.get('/users/:id', (req, res) => {
         user.posts = posts
         res.send(user)
     } else res.status(404).send({error: `user not found.`})
+})
+
+app.get('/posts/:id', (req, res) => {
+    const id = req.params.id
+    const post = getPost.get(id)
+    if (post) {
+        const comments = getAllCommentsForPost.all(id)
+        post.comments = comments
+        res.send(post)
+    } else res.status(404).send({error: `post not found.`})
 })
 
 app.post('/users', (req, res) => {
@@ -93,23 +117,22 @@ app.post('/users', (req, res) => {
     } else res.status(400).send({ errors: errors })
 })
 
-// app.patch('/users/:id', (req,res) => {
-//     const id = req.params.id
-//     const {name, email} = req.body
-//     const user = getUser.get(id)
-//     const errors = []
+app.patch('/users/:id', (req,res) => {
+    const id = req.params.id
+    const {name, email} = req.body
+    const user = getUser.get(id)
+    const errors = []
 
-//     if (user.email === email) errors.push(`This email address is already being used`)
-//     if (user ) {
-//         if (typeof name !== "string") errors.push(`name not a string`)
-//         else user.name = name
-//         if (typeof email !== "string") errors.push(`email not a string`)
-//         else user.email = email
-//         const users = getAllUsers.all()
-
-//         const info = updateUser.run(name, email, id)
-//     }
-// })
+    if (user) {
+        if (typeof name !== "string") errors.push(`name not a string`)
+        else user.name = name
+        if (typeof email !== "string") errors.push(`email not a string`)
+        else user.email = email
+        
+        updateUser.run(user.name, user.email, id)
+        res.send({ data: user, error: errors })
+    } else res.status(404).send({error: 'User not found'})
+})
 
 app.listen(PORT, () => {
     console.log(`Server runing on: http://localhost:${PORT}/`)
